@@ -2,16 +2,16 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <meta name="theme-color" content="#0f766e" />
-<title>Anshul · Health Tracker</title>
+<title>Anshul · Health</title>
 <style>
   :root{
     --bg:#0b1120; --card:#111c33; --card2:#16233f; --line:#243553;
     --ink:#e8eef7; --mut:#94a7c4; --teal:#2dd4bf; --teal2:#0f766e;
     --good:#34d399; --warn:#fbbf24; --bad:#f87171; --accent:#60a5fa;
   }
-  *{box-sizing:border-box}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     background:linear-gradient(180deg,#0b1120,#0d1426);color:var(--ink);
     -webkit-font-smoothing:antialiased;padding-bottom:60px}
@@ -24,7 +24,9 @@
   .wrap{max-width:560px;margin:0 auto;padding:16px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:16px;
     padding:16px;margin-bottom:16px;box-shadow:0 1px 0 rgba(255,255,255,.02) inset}
-  .card h2{margin:0 0 12px;font-size:15px;color:var(--teal);letter-spacing:.4px;text-transform:uppercase}
+  .card h2{margin:0 0 12px;font-size:15px;color:var(--teal);letter-spacing:.4px;text-transform:uppercase;
+    display:flex;justify-content:space-between;align-items:baseline}
+  .card h2 .mini{font-size:12px;color:var(--mut);text-transform:none;letter-spacing:0}
   .rule{display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid var(--line);
     border-radius:12px;margin-bottom:9px;background:var(--card2);cursor:pointer;transition:.15s;user-select:none}
   .rule:active{transform:scale(.99)}
@@ -62,19 +64,67 @@
   .dots{letter-spacing:3px}
   .ok{color:var(--good)} .no{color:var(--bad)}
   .ref details{font-size:13.5px;color:var(--mut);line-height:1.55}
-  .ref summary{color:var(--teal);cursor:pointer;font-size:14px;font-weight:600}
+  .ref summary{color:var(--teal);cursor:pointer;font-size:14px;font-weight:600;margin-bottom:4px}
   .ref b{color:var(--ink)}
   .seg{display:flex;gap:6px;margin:4px 0 14px}
   .seg button{flex:1;background:var(--card2);border:1px solid var(--line);color:var(--mut);
     padding:8px;border-radius:10px;font-size:13px;cursor:pointer}
   .seg button.on{background:#0f2e2b;border-color:var(--teal);color:var(--teal)}
   .tiny{color:var(--mut);font-size:11.5px;text-align:center;margin-top:18px;line-height:1.5}
+
+  /* diet quick-add chips */
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:4px}
+  .chip{border:1px solid var(--line);background:var(--card2);color:var(--ink);border-radius:20px;
+    padding:7px 12px;font-size:13px;cursor:pointer;user-select:none}
+  .chip:active{transform:scale(.94)}
+  .chip.prot{border-color:#2c5a4a;color:#bff0dd}
+
+  /* break-move tiles */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .tile{position:relative;border:none;border-radius:16px;padding:13px 12px 11px;text-align:left;color:#fff;
+    min-height:104px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;
+    box-shadow:0 6px 16px rgba(0,0,0,.32);transition:transform .12s ease,filter .12s ease;font-family:inherit}
+  .tile:active{transform:scale(.96)}
+  .tile .emoji{font-size:26px}
+  .tile .name{font-weight:700;font-size:13.5px;line-height:1.2;margin-top:6px}
+  .tile .meta{font-size:11.5px;opacity:.9;margin-top:2px}
+  .tile.done{filter:saturate(.5) brightness(.65)}
+  .tile .check{position:absolute;top:8px;right:10px;font-size:16px;opacity:0;transition:opacity .2s}
+  .tile.done .check{opacity:1}
+  .sheet{position:fixed;inset:0;background:rgba(8,8,20,.62);backdrop-filter:blur(6px);
+    display:none;align-items:flex-end;z-index:30}
+  .sheet.open{display:flex;animation:fade .2s ease}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .panel{width:100%;max-width:560px;margin:0 auto;border-radius:24px 24px 0 0;padding:20px 20px 30px;
+    color:#fff;animation:rise .28s cubic-bezier(.2,.8,.2,1)}
+  @keyframes rise{from{transform:translateY(40px)}to{transform:translateY(0)}}
+  .grab{width:42px;height:5px;border-radius:99px;background:rgba(255,255,255,.4);margin:0 auto 14px}
+  .panel .emoji{font-size:40px}
+  .panel h3{margin:6px 0 2px;font-size:22px}
+  .panel .cue{color:rgba(255,255,255,.92);font-size:14.5px;line-height:1.5;margin:8px 0 4px}
+  .dialwrap{display:flex;justify-content:center;margin:18px 0 6px}
+  .dial{width:160px;height:160px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    flex-direction:column;background:rgba(0,0,0,.28);border:6px solid rgba(255,255,255,.25)}
+  .dial .big{font-size:46px;font-weight:800;line-height:1}
+  .dial .unit{font-size:12px;opacity:.85;margin-top:4px;letter-spacing:.5px}
+  .stepper{display:flex;gap:14px;align-items:center;justify-content:center;margin-top:4px}
+  .step{width:52px;height:52px;border-radius:50%;border:none;font-size:24px;font-weight:700;
+    background:rgba(255,255,255,.2);color:#fff;cursor:pointer}
+  .step:active{transform:scale(.9)}
+  .pctrl{display:flex;gap:10px;margin-top:18px}
+  .pbtn{flex:1;border:none;border-radius:14px;padding:14px;font-size:15px;font-weight:700;cursor:pointer}
+  .pbtn.ghost{background:rgba(255,255,255,.16);color:#fff}
+  .pbtn.done{background:#10b981;color:#04241a}
+  .toast{position:fixed;left:50%;top:18px;transform:translateX(-50%) translateY(-90px);
+    background:#10b981;color:#04241a;font-weight:700;padding:11px 18px;border-radius:99px;z-index:50;
+    transition:transform .35s cubic-bezier(.2,.9,.3,1.3);box-shadow:0 8px 24px rgba(0,0,0,.4);font-size:14px}
+  .toast.show{transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
 <header>
   <div class="wrap" style="padding:0">
-    <h1>🏋️ Anshul · Health Tracker</h1>
+    <h1>🏋️ Anshul · Health</h1>
     <div class="sub"><span id="todayLabel"></span><span class="syncdot off" id="syncDot">connecting…</span></div>
   </div>
 </header>
@@ -91,7 +141,8 @@
     <label class="fl">💪 Movement / workout done?</label>
     <div class="chk" id="workout"><div class="pill" data-v="1">Yes</div><div class="pill" data-v="0">No</div></div>
 
-    <label class="fl">🍽️ What did you eat? (rough is fine)</label>
+    <label class="fl">🍽️ What did you eat? (tap to add, or type)</label>
+    <div class="chips" id="dietChips"></div>
     <textarea id="meals" rows="3" placeholder="Breakfast / lunch / dinner..."></textarea>
 
     <label class="fl">📝 Notes (energy, hunger, anything)</label>
@@ -99,6 +150,11 @@
 
     <button class="save" id="saveDay">Save today</button>
     <div class="saved" id="savedMsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Break Moves 💪 <span class="mini" id="breakCount">0 / 4 today</span></h2>
+    <div class="grid" id="breakGrid"></div>
   </div>
 
   <div class="card">
@@ -123,7 +179,7 @@
   </div>
 
   <div class="card ref">
-    <h2>Your plan</h2>
+    <h2>Your plan — diet</h2>
     <details open><summary>The 4 rules</summary>
       <p>1. <b>Protein first, every meal</b> — dal/paneer/sprouts/channa/sattu before the roti/rice.<br>
       2. <b>Half your plate = veg/salad.</b> Eyeball it.<br>
@@ -134,6 +190,9 @@
     <details><summary>The Ayurvedic edge</summary>
       <p><b>Lunch = biggest meal</b> (agni peaks midday). <b>Dinner = lightest, before sunset</b>
       (khichdi/soup, no paranthas/curd at night). Warm water + lemon + honey on waking. 100-step walk after meals.</p></details>
+    <details><summary>Easy protein wins</summary>
+      <p>Sattu (~11g), channa/chana (~9g/katori), sprouts, paneer, eggs, Greek/hung curd, makhana for a light snack.
+      Aim ~110g/day — anchor each meal with one of these <b>first</b>.</p></details>
     <details><summary>Targets &amp; the slip rule</summary>
       <p>~110g protein, gentle deficit. <b>6 of 7 days = winning.</b> Miss one? Nothing's ruined —
       next meal, back on. Monday weigh-in is the only number.</p></details>
@@ -144,6 +203,28 @@
     Add to Home Screen for an app feel.
   </div>
 </div>
+
+<!-- break-move detail sheet -->
+<div class="sheet" id="sheet">
+  <div class="panel" id="panel">
+    <div class="grab"></div>
+    <div class="emoji" id="bEmoji">🤸</div>
+    <h3 id="bName">Move</h3>
+    <div class="cue" id="bCue">Cue.</div>
+    <div class="dialwrap"><div class="dial" id="dial">
+      <div class="big" id="dialNum">0</div><div class="unit" id="dialUnit">REPS</div>
+    </div></div>
+    <div class="stepper" id="stepper">
+      <button class="step" id="minus">–</button>
+      <button class="step" id="plus">+</button>
+    </div>
+    <div class="pctrl">
+      <button class="pbtn ghost" id="closeBtn">Close</button>
+      <button class="pbtn done" id="bDone">Mark done ✓</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast">Logged ✓</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -157,15 +238,39 @@ const RULES = [
   {k:"carb",    t:"One heavy carb today, not three", s:"Paranthas/rice once, ideally lunch"},
   {k:"sattu",   t:"Sattu on the commute", s:"Easy 11g-protein autopilot win"},
 ];
+
+// diet quick-add chips (protein-first ones flagged green)
+const DIET = [
+  {t:"Sattu",p:1},{t:"Channa",p:1},{t:"Sprouts",p:1},{t:"Paneer",p:1},{t:"Eggs",p:1},
+  {t:"Curd",p:1},{t:"Dal",p:1},{t:"Makhana",p:0},{t:"Salad",p:0},{t:"Cucumber",p:0},
+  {t:"Fruit",p:0},{t:"Nuts",p:0},{t:"Roti",p:0},{t:"Rice",p:0},
+];
+
+const MOVES = [
+  {id:"wall", name:"Wall Push-ups", emoji:"🙌", c1:"#f97316", c2:"#ea580c", type:"reps", target:15, unit:"REPS",
+   cue:"Arms straight at shoulder height, palms on wall. Lean in slow till your nose nearly touches, push back firm. Body in one straight line — no sagging."},
+  {id:"squat", name:"Bodyweight Squats", emoji:"🏋️", c1:"#a855f7", c2:"#7c3aed", type:"reps", target:20, unit:"REPS",
+   cue:"Feet shoulder-width, chest up. Sit back like reaching for a chair, knees over toes, drive up through your heels."},
+  {id:"calf", name:"Calf Raises", emoji:"🦵", c1:"#06b6d4", c2:"#0891b2", type:"reps", target:20, unit:"REPS",
+   cue:"Stand tall, rise onto your toes slowly, pause at the top, lower under control. Hold a wall for balance if needed."},
+  {id:"hip", name:"Hip Circles", emoji:"🌀", c1:"#ec4899", c2:"#db2777", type:"reps", target:10, unit:"EACH WAY",
+   cue:"Hands on hips, feet planted. Draw big slow circles with your hips — 10 one way, then 10 the other. Loosen the lower back."},
+  {id:"neck", name:"Neck + Shoulder Rolls", emoji:"💆", c1:"#22c55e", c2:"#16a34a", type:"time", target:60, unit:"SECONDS",
+   cue:"Slow shoulder rolls back, then gentle neck rolls side to side. Unclench the jaw. Breathe. Melt the desk tension."},
+  {id:"hold", name:"Deep Squat Hold", emoji:"🧘", c1:"#eab308", c2:"#ca8a04", type:"time", target:30, unit:"SECONDS",
+   cue:"Sink into a deep squat, heels down, chest open. Let your hips and ankles relax into the stretch. Hold and breathe."},
+  {id:"fold", name:"Standing Forward Fold", emoji:"🙇", c1:"#3b82f6", c2:"#2563eb", type:"time", target:30, unit:"PER SIDE",
+   cue:"Hinge at the hips, let your head and arms hang heavy. Soft knees. Decompress the spine — sway gently side to side."},
+];
+const BREAK_GOAL = 4;
+
 const todayKey = () => { const d=new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10); };
 const fmtDate = d => new Date(d+"T00:00").toLocaleDateString("en-IN",{weekday:"short",day:"numeric",month:"short"});
-
 function setSync(state,label){ const e=document.getElementById("syncDot"); e.className="syncdot "+state; e.textContent=label; }
 
-// Cloud-only: all state lives in Supabase. `data` is just the in-memory copy
-// of the latest cloud read for this session — nothing is persisted on device.
+// Cloud-only: in-memory mirror of latest cloud read; nothing persisted on device.
 let data = {days:{}, weights:[]};
-let cur = {rules:{},sattu:null,workout:null,meals:"",notes:""};
+let cur = {rules:{},sattu:null,workout:null,meals:"",notes:"",breaks:{}};
 
 // ---------- cloud ----------
 async function pull(){
@@ -176,20 +281,20 @@ async function pull(){
       sb.from("weights").select("*").order("d",{ascending:false}).limit(60),
     ]);
     if(dRes.error||wRes.error) throw (dRes.error||wRes.error);
-    data.days = {}; (dRes.data||[]).forEach(r=>{ data.days[r.d]={rules:r.rules||{},sattu:r.sattu,workout:r.workout,meals:r.meals||"",notes:r.notes||""}; });
+    data.days = {}; (dRes.data||[]).forEach(r=>{ data.days[r.d]={rules:r.rules||{},sattu:r.sattu,workout:r.workout,meals:r.meals||"",notes:r.notes||"",breaks:r.breaks||{}}; });
     data.weights = (wRes.data||[]).map(r=>({d:r.d,kg:Number(r.kg)}));
     cur = data.days[todayKey()] || cur;
     setSync("ok","☁️ live");
-    loadDaily(); renderWeight(); renderHist();
+    loadDaily(); renderBreaks(); renderWeight(); renderHist();
   }catch(e){ console.warn(e); setSync("err","connection error"); failHist(); }
 }
 function failHist(){
-  const h=document.getElementById("hist");
-  h.innerHTML='<div style="color:var(--bad);font-size:13px">Couldn’t reach the cloud DB. Check your connection and reload.</div>';
+  document.getElementById("hist").innerHTML='<div style="color:var(--bad);font-size:13px">Couldn’t reach the cloud DB. Check your connection and reload.</div>';
 }
 async function pushDay(){
-  const row = {d:todayKey(), rules:cur.rules, sattu:cur.sattu, workout:cur.workout, meals:cur.meals, notes:cur.notes, updated_at:new Date().toISOString()};
+  const row = {d:todayKey(), rules:cur.rules, sattu:cur.sattu, workout:cur.workout, meals:cur.meals, notes:cur.notes, breaks:cur.breaks, updated_at:new Date().toISOString()};
   const {error} = await sb.from("days").upsert(row,{onConflict:"d"});
+  if(!error) data.days[todayKey()]=cur;
   return !error;
 }
 async function pushWeight(k,kg){
@@ -197,7 +302,7 @@ async function pushWeight(k,kg){
   return !error;
 }
 
-// ---------- UI ----------
+// ---------- daily + diet ----------
 function renderRules(){
   const box=document.getElementById("rules"); box.innerHTML="";
   RULES.forEach(r=>{
@@ -215,6 +320,19 @@ function renderPills(id,val){
     p.onclick=()=>{ cur[id]=p.dataset.v==="1"; renderPills(id,cur[id]?1:0); };
   });
 }
+function renderDietChips(){
+  const box=document.getElementById("dietChips"); box.innerHTML="";
+  DIET.forEach(item=>{
+    const c=document.createElement("div");
+    c.className="chip"+(item.p?" prot":""); c.textContent=(item.p?"+ ":"")+item.t;
+    c.onclick=()=>{
+      const ta=document.getElementById("meals");
+      ta.value = ta.value.trim() ? ta.value.replace(/\s*$/,"") + ", " + item.t : item.t;
+      navigator.vibrate&&navigator.vibrate(12);
+    };
+    box.appendChild(c);
+  });
+}
 function loadDaily(){
   renderRules();
   renderPills("sattu", cur.sattu===true?1:cur.sattu===false?0:null);
@@ -227,15 +345,72 @@ document.getElementById("saveDay").onclick=async()=>{
   cur.notes=document.getElementById("notes").value;
   const m=document.getElementById("savedMsg"); m.textContent="Saving…";
   const ok=await pushDay();
-  if(ok){
-    data.days[todayKey()]=cur;
-    m.textContent="✓ Saved to cloud"; setSync("ok","☁️ live"); renderHist();
-  } else {
-    m.textContent="⚠️ Couldn’t save — check connection"; setSync("err","connection error");
-  }
+  if(ok){ m.textContent="✓ Saved to cloud"; setSync("ok","☁️ live"); renderHist(); }
+  else { m.textContent="⚠️ Couldn’t save — check connection"; setSync("err","connection error"); }
   setTimeout(()=>m.textContent="",2600);
 };
 
+// ---------- break moves ----------
+function breaksDone(day){ return day&&day.breaks ? Object.values(day.breaks).filter(Boolean).length : 0; }
+function renderBreaks(){
+  const grid=document.getElementById("breakGrid"); grid.innerHTML="";
+  MOVES.forEach(m=>{
+    const done=!!(cur.breaks&&cur.breaks[m.id]);
+    const b=document.createElement("button");
+    b.className="tile"+(done?" done":"");
+    b.style.background=`linear-gradient(145deg, ${m.c1}, ${m.c2})`;
+    b.innerHTML=`<span class="check">✅</span><div class="emoji">${m.emoji}</div>
+      <div><div class="name">${m.name}</div>
+      <div class="meta">${m.type==="reps"? m.target+" "+m.unit.toLowerCase() : m.target+"s"}</div></div>`;
+    b.onclick=()=>openMove(m);
+    grid.appendChild(b);
+  });
+  document.getElementById("breakCount").textContent = breaksDone(cur)+" / "+BREAK_GOAL+" today";
+}
+
+const sheet=document.getElementById("sheet"), panel=document.getElementById("panel"), stepper=document.getElementById("stepper");
+let activeMove=null, mtimer=null, mcount=0;
+function openMove(m){
+  activeMove=m;
+  panel.style.background=`linear-gradient(160deg, ${m.c1}, ${m.c2})`;
+  document.getElementById("bEmoji").textContent=m.emoji;
+  document.getElementById("bName").textContent=m.name;
+  document.getElementById("bCue").textContent=m.cue;
+  document.getElementById("dialUnit").textContent=m.unit;
+  clearInterval(mtimer);
+  if(m.type==="reps"){
+    mcount=0; stepper.style.display="flex";
+    document.getElementById("dialNum").textContent=0;
+  } else {
+    mcount=m.target; stepper.style.display="none";
+    document.getElementById("dialNum").textContent=mcount;
+    mtimer=setInterval(()=>{
+      mcount--; document.getElementById("dialNum").textContent=mcount;
+      if(mcount<=0){ clearInterval(mtimer); navigator.vibrate&&navigator.vibrate(200);
+        document.getElementById("dialNum").textContent="✓"; }
+    },1000);
+  }
+  sheet.classList.add("open");
+}
+function closeMove(){ clearInterval(mtimer); sheet.classList.remove("open"); }
+document.getElementById("plus").onclick=()=>{ mcount++; document.getElementById("dialNum").textContent=mcount; navigator.vibrate&&navigator.vibrate(15); };
+document.getElementById("minus").onclick=()=>{ if(mcount>0)mcount--; document.getElementById("dialNum").textContent=mcount; };
+document.getElementById("closeBtn").onclick=closeMove;
+sheet.onclick=(e)=>{ if(e.target===sheet) closeMove(); };
+document.getElementById("bDone").onclick=async()=>{
+  if(!cur.breaks) cur.breaks={};
+  cur.breaks[activeMove.id]=true;
+  renderBreaks(); closeMove();
+  navigator.vibrate&&navigator.vibrate([40,30,40]);
+  const ok=await pushDay();
+  toast(ok? "Logged ✓ — "+activeMove.name : "⚠️ saved locally, sync failed");
+  setSync(ok?"ok":"err", ok?"☁️ live":"connection error");
+  renderHist();
+};
+const toastEl=document.getElementById("toast");
+function toast(t){ toastEl.textContent=t; toastEl.classList.add("show"); setTimeout(()=>toastEl.classList.remove("show"),1900); }
+
+// ---------- weight ----------
 function renderWeight(){
   const ws=data.weights.slice().sort((a,b)=>a.d<b.d?-1:1);
   const now=ws[ws.length-1];
@@ -268,6 +443,7 @@ document.getElementById("logWt").onclick=async()=>{
   btn.disabled=false; btn.textContent="Log";
 };
 
+// ---------- history ----------
 let tab="days";
 document.querySelectorAll("#seg button").forEach(b=>{
   b.onclick=()=>{ tab=b.dataset.t; document.querySelectorAll("#seg button").forEach(x=>x.classList.toggle("on",x===b)); renderHist(); };
@@ -278,10 +454,10 @@ function renderHist(){
     const keys=Object.keys(data.days).sort().reverse().slice(0,30);
     if(!keys.length){ h.innerHTML='<div style="color:var(--mut);font-size:13px">No entries yet — save today to start.</div>'; return; }
     keys.forEach(k=>{
-      const d=data.days[k], score=RULES.filter(r=>d.rules&&d.rules[r.k]).length;
+      const d=data.days[k], score=RULES.filter(r=>d.rules&&d.rules[r.k]).length, bd=breaksDone(d);
       const dots=RULES.map(r=>(d.rules&&d.rules[r.k])?'<span class="ok">●</span>':'<span class="no">○</span>').join("");
       const el=document.createElement("div"); el.className="d";
-      el.innerHTML=`<div class="dt"><span>${fmtDate(k)}</span><span>${score}/4</span></div>
+      el.innerHTML=`<div class="dt"><span>${fmtDate(k)}</span><span>${score}/4 rules${bd?` · 🤸 ${bd}/4`:""}</span></div>
         <div class="dots">${dots}</div>
         ${d.meals?`<div style="margin-top:5px">${d.meals.replace(/</g,"&lt;")}</div>`:""}
         ${d.notes?`<div style="color:var(--mut);margin-top:3px">${d.notes.replace(/</g,"&lt;")}</div>`:""}`;
@@ -303,7 +479,7 @@ function renderHist(){
 // ---------- init ----------
 document.getElementById("todayLabel").textContent=
   new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"});
-loadDaily();                                                 // form is interactive immediately
+renderDietChips(); loadDaily(); renderBreaks();              // interactive immediately
 document.getElementById("hist").innerHTML='<div style="color:var(--mut);font-size:13px">Loading from cloud…</div>';
 pull();                                                      // cloud is the only source of truth
 </script>
