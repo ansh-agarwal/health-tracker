@@ -75,7 +75,7 @@
 <header>
   <div class="wrap" style="padding:0">
     <h1>🏋️ Anshul · Health Tracker</h1>
-    <div class="sub"><span id="todayLabel"></span><span class="syncdot off" id="syncDot">offline</span></div>
+    <div class="sub"><span id="todayLabel"></span><span class="syncdot off" id="syncDot">connecting…</span></div>
   </div>
 </header>
 
@@ -140,7 +140,7 @@
   </div>
 
   <div class="tiny">
-    ☁️ Synced to your private cloud DB · also cached on this device for offline use.<br>
+    ☁️ Live from your private cloud DB · needs a connection to load &amp; save.<br>
     Add to Home Screen for an app feel.
   </div>
 </div>
@@ -157,31 +157,35 @@ const RULES = [
   {k:"carb",    t:"One heavy carb today, not three", s:"Paranthas/rice once, ideally lunch"},
   {k:"sattu",   t:"Sattu on the commute", s:"Easy 11g-protein autopilot win"},
 ];
-const LS = "anshul_health_v1";
-const cache = JSON.parse(localStorage.getItem(LS) || '{"days":{},"weights":[]}');
-const saveCache = () => localStorage.setItem(LS, JSON.stringify(cache));
 const todayKey = () => { const d=new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10); };
 const fmtDate = d => new Date(d+"T00:00").toLocaleDateString("en-IN",{weekday:"short",day:"numeric",month:"short"});
 
 function setSync(state,label){ const e=document.getElementById("syncDot"); e.className="syncdot "+state; e.textContent=label; }
 
-let cur = cache.days[todayKey()] || {rules:{},sattu:null,workout:null,meals:"",notes:""};
+// Cloud-only: all state lives in Supabase. `data` is just the in-memory copy
+// of the latest cloud read for this session — nothing is persisted on device.
+let data = {days:{}, weights:[]};
+let cur = {rules:{},sattu:null,workout:null,meals:"",notes:""};
 
 // ---------- cloud ----------
 async function pull(){
+  setSync("off","connecting…");
   try{
     const [dRes, wRes] = await Promise.all([
       sb.from("days").select("*").order("d",{ascending:false}).limit(60),
       sb.from("weights").select("*").order("d",{ascending:false}).limit(60),
     ]);
     if(dRes.error||wRes.error) throw (dRes.error||wRes.error);
-    cache.days = {}; (dRes.data||[]).forEach(r=>{ cache.days[r.d]={rules:r.rules||{},sattu:r.sattu,workout:r.workout,meals:r.meals||"",notes:r.notes||""}; });
-    cache.weights = (wRes.data||[]).map(r=>({d:r.d,kg:Number(r.kg)}));
-    saveCache();
-    cur = cache.days[todayKey()] || cur;
-    setSync("ok","☁️ synced");
+    data.days = {}; (dRes.data||[]).forEach(r=>{ data.days[r.d]={rules:r.rules||{},sattu:r.sattu,workout:r.workout,meals:r.meals||"",notes:r.notes||""}; });
+    data.weights = (wRes.data||[]).map(r=>({d:r.d,kg:Number(r.kg)}));
+    cur = data.days[todayKey()] || cur;
+    setSync("ok","☁️ live");
     loadDaily(); renderWeight(); renderHist();
-  }catch(e){ console.warn(e); setSync("err","sync error"); }
+  }catch(e){ console.warn(e); setSync("err","connection error"); failHist(); }
+}
+function failHist(){
+  const h=document.getElementById("hist");
+  h.innerHTML='<div style="color:var(--bad);font-size:13px">Couldn’t reach the cloud DB. Check your connection and reload.</div>';
 }
 async function pushDay(){
   const row = {d:todayKey(), rules:cur.rules, sattu:cur.sattu, workout:cur.workout, meals:cur.meals, notes:cur.notes, updated_at:new Date().toISOString()};
@@ -221,16 +225,19 @@ function loadDaily(){
 document.getElementById("saveDay").onclick=async()=>{
   cur.meals=document.getElementById("meals").value;
   cur.notes=document.getElementById("notes").value;
-  cache.days[todayKey()]=cur; saveCache();
   const m=document.getElementById("savedMsg"); m.textContent="Saving…";
   const ok=await pushDay();
-  m.textContent= ok?"✓ Saved & synced":"✓ Saved on device (will sync later)";
-  setSync(ok?"ok":"off", ok?"☁️ synced":"offline");
-  setTimeout(()=>m.textContent="",2200); renderHist();
+  if(ok){
+    data.days[todayKey()]=cur;
+    m.textContent="✓ Saved to cloud"; setSync("ok","☁️ live"); renderHist();
+  } else {
+    m.textContent="⚠️ Couldn’t save — check connection"; setSync("err","connection error");
+  }
+  setTimeout(()=>m.textContent="",2600);
 };
 
 function renderWeight(){
-  const ws=cache.weights.slice().sort((a,b)=>a.d<b.d?-1:1);
+  const ws=data.weights.slice().sort((a,b)=>a.d<b.d?-1:1);
   const now=ws[ws.length-1];
   document.getElementById("wtNow").innerHTML= now?`${now.kg} <span>kg</span>`:`— <span>kg</span>`;
   const dEl=document.getElementById("wtDelta");
@@ -250,11 +257,15 @@ function renderWeight(){
 }
 document.getElementById("logWt").onclick=async()=>{
   const v=parseFloat(document.getElementById("wtInput").value); if(!v) return;
-  const k=todayKey(), ex=cache.weights.find(w=>w.d===k);
-  if(ex) ex.kg=v; else cache.weights.push({d:k,kg:v});
-  saveCache(); document.getElementById("wtInput").value="";
-  renderWeight();
-  const ok=await pushWeight(k,v); setSync(ok?"ok":"off", ok?"☁️ synced":"offline"); renderHist();
+  const k=todayKey(), btn=document.getElementById("logWt"); btn.disabled=true; btn.textContent="…";
+  const ok=await pushWeight(k,v);
+  if(ok){
+    const ex=data.weights.find(w=>w.d===k);
+    if(ex) ex.kg=v; else data.weights.push({d:k,kg:v});
+    document.getElementById("wtInput").value="";
+    renderWeight(); renderHist(); setSync("ok","☁️ live");
+  } else { setSync("err","connection error"); alert("Couldn’t save weight — check your connection."); }
+  btn.disabled=false; btn.textContent="Log";
 };
 
 let tab="days";
@@ -264,10 +275,10 @@ document.querySelectorAll("#seg button").forEach(b=>{
 function renderHist(){
   const h=document.getElementById("hist"); h.innerHTML="";
   if(tab==="days"){
-    const keys=Object.keys(cache.days).sort().reverse().slice(0,30);
+    const keys=Object.keys(data.days).sort().reverse().slice(0,30);
     if(!keys.length){ h.innerHTML='<div style="color:var(--mut);font-size:13px">No entries yet — save today to start.</div>'; return; }
     keys.forEach(k=>{
-      const d=cache.days[k], score=RULES.filter(r=>d.rules&&d.rules[r.k]).length;
+      const d=data.days[k], score=RULES.filter(r=>d.rules&&d.rules[r.k]).length;
       const dots=RULES.map(r=>(d.rules&&d.rules[r.k])?'<span class="ok">●</span>':'<span class="no">○</span>').join("");
       const el=document.createElement("div"); el.className="d";
       el.innerHTML=`<div class="dt"><span>${fmtDate(k)}</span><span>${score}/4</span></div>
@@ -277,7 +288,7 @@ function renderHist(){
       h.appendChild(el);
     });
   } else {
-    const ws=cache.weights.slice().sort((a,b)=>a.d<b.d?1:-1);
+    const ws=data.weights.slice().sort((a,b)=>a.d<b.d?1:-1);
     if(!ws.length){ h.innerHTML='<div style="color:var(--mut);font-size:13px">No weigh-ins yet.</div>'; return; }
     ws.forEach((w,i)=>{
       const prev=ws[i+1], ch=prev?(w.kg-prev.kg).toFixed(1):null;
@@ -292,8 +303,9 @@ function renderHist(){
 // ---------- init ----------
 document.getElementById("todayLabel").textContent=
   new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"});
-loadDaily(); renderWeight(); renderHist();   // instant from cache
-pull();                                      // then refresh from cloud
+loadDaily();                                                 // form is interactive immediately
+document.getElementById("hist").innerHTML='<div style="color:var(--mut);font-size:13px">Loading from cloud…</div>';
+pull();                                                      // cloud is the only source of truth
 </script>
 </body>
 </html>
