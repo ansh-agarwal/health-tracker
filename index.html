@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0f766e" />
+<title>Anshul · Health Tracker</title>
+<style>
+  :root{
+    --bg:#0b1120; --card:#111c33; --card2:#16233f; --line:#243553;
+    --ink:#e8eef7; --mut:#94a7c4; --teal:#2dd4bf; --teal2:#0f766e;
+    --good:#34d399; --warn:#fbbf24; --bad:#f87171; --accent:#60a5fa;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:linear-gradient(180deg,#0b1120,#0d1426);color:var(--ink);
+    -webkit-font-smoothing:antialiased;padding-bottom:60px}
+  header{padding:22px 18px 14px;position:sticky;top:0;background:rgba(11,17,32,.92);
+    backdrop-filter:blur(8px);border-bottom:1px solid var(--line);z-index:10}
+  h1{margin:0;font-size:20px;letter-spacing:.3px}
+  .sub{color:var(--mut);font-size:13px;margin-top:3px}
+  .wrap{max-width:560px;margin:0 auto;padding:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:16px;margin-bottom:16px;box-shadow:0 1px 0 rgba(255,255,255,.02) inset}
+  .card h2{margin:0 0 12px;font-size:15px;color:var(--teal);letter-spacing:.4px;text-transform:uppercase}
+  .rule{display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid var(--line);
+    border-radius:12px;margin-bottom:9px;background:var(--card2);cursor:pointer;transition:.15s;user-select:none}
+  .rule:active{transform:scale(.99)}
+  .rule.on{border-color:var(--teal);background:#0f2e2b}
+  .rule .box{width:24px;height:24px;border-radius:8px;border:2px solid var(--line);
+    flex:0 0 auto;display:grid;place-items:center;font-size:15px;color:#0b1120;background:transparent}
+  .rule.on .box{background:var(--teal);border-color:var(--teal)}
+  .rule .txt{font-size:14.5px;line-height:1.3}
+  .rule .txt small{display:block;color:var(--mut);font-size:12px;margin-top:2px}
+  label.fl{display:block;color:var(--mut);font-size:12.5px;margin:10px 0 5px;letter-spacing:.3px}
+  textarea,input[type=text],input[type=number]{width:100%;background:var(--card2);border:1px solid var(--line);
+    color:var(--ink);border-radius:10px;padding:11px;font-size:15px;font-family:inherit;resize:vertical}
+  textarea:focus,input:focus{outline:none;border-color:var(--teal)}
+  .row{display:flex;gap:10px}
+  .row>*{flex:1}
+  .chk{display:flex;gap:10px}
+  .chk .pill{flex:1;text-align:center;padding:11px;border-radius:12px;border:1px solid var(--line);
+    background:var(--card2);font-size:14px;cursor:pointer;user-select:none}
+  .chk .pill.on{background:#10243f;border-color:var(--accent);color:#cfe2ff}
+  button.save{width:100%;background:linear-gradient(90deg,var(--teal),var(--teal2));color:#04140f;
+    border:none;border-radius:12px;padding:14px;font-size:16px;font-weight:700;margin-top:14px;cursor:pointer}
+  button.save:active{opacity:.9}
+  .saved{color:var(--good);font-size:13px;text-align:center;margin-top:8px;height:16px}
+  .wt-now{font-size:34px;font-weight:700;margin:2px 0}
+  .wt-now span{font-size:15px;color:var(--mut);font-weight:400}
+  .delta{font-size:13px;margin-top:2px}
+  .bars{display:flex;align-items:flex-end;gap:6px;height:90px;margin-top:14px;padding-top:6px}
+  .bars .b{flex:1;background:var(--card2);border-radius:6px 6px 0 0;position:relative;min-height:4px;
+    border:1px solid var(--line);border-bottom:none}
+  .bars .b i{position:absolute;bottom:-18px;left:0;right:0;text-align:center;font-size:10px;color:var(--mut);font-style:normal}
+  .goal{display:flex;justify-content:space-between;font-size:13px;color:var(--mut);margin-top:26px}
+  .hist .d{border-top:1px solid var(--line);padding:11px 2px;font-size:13.5px}
+  .hist .d:first-child{border-top:none}
+  .hist .dt{color:var(--mut);font-size:12px;margin-bottom:3px;display:flex;justify-content:space-between}
+  .dots{letter-spacing:3px}
+  .ok{color:var(--good)} .no{color:var(--bad)}
+  .ref details{font-size:13.5px;color:var(--mut);line-height:1.55}
+  .ref summary{color:var(--teal);cursor:pointer;font-size:14px;font-weight:600}
+  .ref b{color:var(--ink)}
+  .seg{display:flex;gap:6px;margin:4px 0 14px}
+  .seg button{flex:1;background:var(--card2);border:1px solid var(--line);color:var(--mut);
+    padding:8px;border-radius:10px;font-size:13px;cursor:pointer}
+  .seg button.on{background:#0f2e2b;border-color:var(--teal);color:var(--teal)}
+  .tiny{color:var(--mut);font-size:11.5px;text-align:center;margin-top:18px;line-height:1.5}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap" style="padding:0">
+    <h1>🏋️ Anshul · Health Tracker</h1>
+    <div class="sub" id="todayLabel"></div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- DAILY -->
+  <div class="card">
+    <h2>Today — the 4 rules</h2>
+    <div id="rules"></div>
+
+    <label class="fl">🥤 Sattu on the commute?</label>
+    <div class="chk" id="sattu">
+      <div class="pill" data-v="1">Yes</div><div class="pill" data-v="0">No</div>
+    </div>
+
+    <label class="fl">💪 Movement / workout done?</label>
+    <div class="chk" id="workout">
+      <div class="pill" data-v="1">Yes</div><div class="pill" data-v="0">No</div>
+    </div>
+
+    <label class="fl">🍽️ What did you eat? (rough is fine)</label>
+    <textarea id="meals" rows="3" placeholder="Breakfast / lunch / dinner..."></textarea>
+
+    <label class="fl">📝 Notes (energy, hunger, anything)</label>
+    <textarea id="notes" rows="2" placeholder="Optional"></textarea>
+
+    <button class="save" id="saveDay">Save today</button>
+    <div class="saved" id="savedMsg"></div>
+  </div>
+
+  <!-- WEIGHT -->
+  <div class="card">
+    <h2>Weight</h2>
+    <div class="wt-now" id="wtNow">— <span>kg</span></div>
+    <div class="delta" id="wtDelta"></div>
+    <div class="row" style="margin-top:12px">
+      <input type="number" id="wtInput" step="0.1" placeholder="Today's kg" inputmode="decimal" />
+      <button class="save" id="logWt" style="margin-top:0;flex:0 0 120px">Log</button>
+    </div>
+    <div class="bars" id="wtBars"></div>
+    <div class="goal"><span>Baseline ~84</span><span>🎯 Goal 73</span></div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="card">
+    <h2>History</h2>
+    <div class="seg" id="seg">
+      <button data-t="days" class="on">Days</button>
+      <button data-t="weight">Weigh-ins</button>
+    </div>
+    <div class="hist" id="hist"></div>
+  </div>
+
+  <!-- PLAN -->
+  <div class="card ref">
+    <h2>Your plan</h2>
+    <details open>
+      <summary>The 4 rules</summary>
+      <p>1. <b>Protein first, every meal</b> — dal/paneer/sprouts/channa/sattu before the roti/rice.<br>
+      2. <b>Half your plate = veg/salad.</b> Eyeball it.<br>
+      3. <b>One heavy carb a day, not three</b> (paranthas/rice once, ideally lunch).<br>
+      4. <b>Sattu on the commute, daily.</b></p>
+    </details>
+    <details>
+      <summary>The plate template</summary>
+      <p>Any meal, no maths: <b>½ veg/salad · ¼ protein · ¼ carb</b>. Warm, fresh, eat to ¾ full.</p>
+    </details>
+    <details>
+      <summary>The Ayurvedic edge</summary>
+      <p><b>Lunch = biggest meal</b> (agni peaks midday). <b>Dinner = lightest, before sunset</b>
+      (khichdi/soup, no paranthas/curd at night). Warm water + lemon + honey on waking.
+      100-step walk after meals.</p>
+    </details>
+    <details>
+      <summary>Targets &amp; the slip rule</summary>
+      <p>~110g protein, gentle deficit. <b>6 of 7 days = winning.</b> Miss one? Nothing's ruined —
+      next meal, back on. Monday weigh-in is the only number; daily just ask "4 rules — yes?"</p>
+    </details>
+  </div>
+
+  <div class="tiny">
+    Saved privately on this device (your browser).<br>Bookmark this page · add to Home Screen for an app feel.
+  </div>
+</div>
+
+<script>
+const RULES = [
+  {k:"protein", t:"Protein first, every meal", s:"Eat dal/paneer/sprouts before roti/rice"},
+  {k:"veg",     t:"Half the plate = veg/salad", s:"Just eyeball it"},
+  {k:"carb",    t:"One heavy carb today, not three", s:"Paranthas/rice once, ideally lunch"},
+  {k:"sattu",   t:"Sattu on the commute", s:"Easy 11g-protein autopilot win"},
+];
+const LS = "anshul_health_v1";
+const db = JSON.parse(localStorage.getItem(LS) || '{"days":{},"weights":[]}');
+const save = () => localStorage.setItem(LS, JSON.stringify(db));
+const todayKey = () => new Date().toISOString().slice(0,10);
+const fmtDate = d => new Date(d+"T00:00").toLocaleDateString("en-IN",{weekday:"short",day:"numeric",month:"short"});
+
+// ---- daily state ----
+let cur = db.days[todayKey()] || {rules:{},sattu:null,workout:null,meals:"",notes:""};
+
+function renderRules(){
+  const box = document.getElementById("rules"); box.innerHTML="";
+  RULES.forEach(r=>{
+    const on = !!cur.rules[r.k];
+    const el = document.createElement("div");
+    el.className = "rule"+(on?" on":"");
+    el.innerHTML = `<div class="box">${on?"✓":""}</div><div class="txt">${r.t}<small>${r.s}</small></div>`;
+    el.onclick = ()=>{ cur.rules[r.k] = !cur.rules[r.k]; renderRules(); };
+    box.appendChild(el);
+  });
+}
+function renderPills(id, val){
+  document.querySelectorAll(`#${id} .pill`).forEach(p=>{
+    p.classList.toggle("on", String(val)===p.dataset.v);
+    p.onclick = ()=>{ cur[id] = p.dataset.v==="1"; renderPills(id, cur[id]?1:0); };
+  });
+}
+function loadDaily(){
+  renderRules();
+  renderPills("sattu", cur.sattu===true?1:cur.sattu===false?0:null);
+  renderPills("workout", cur.workout===true?1:cur.workout===false?0:null);
+  document.getElementById("meals").value = cur.meals||"";
+  document.getElementById("notes").value = cur.notes||"";
+}
+document.getElementById("saveDay").onclick = ()=>{
+  cur.meals = document.getElementById("meals").value;
+  cur.notes = document.getElementById("notes").value;
+  db.days[todayKey()] = cur; save();
+  const m = document.getElementById("savedMsg"); m.textContent = "✓ Saved";
+  setTimeout(()=>m.textContent="",1800);
+  renderHist();
+};
+
+// ---- weight ----
+function renderWeight(){
+  const ws = db.weights.slice().sort((a,b)=>a.d<b.d?-1:1);
+  const now = ws[ws.length-1];
+  document.getElementById("wtNow").innerHTML = now ? `${now.kg} <span>kg</span>` : `— <span>kg</span>`;
+  const dEl = document.getElementById("wtDelta");
+  if(now){
+    const base = 84, toGoal = (now.kg-73).toFixed(1);
+    const fromBase = (now.kg-base).toFixed(1);
+    dEl.innerHTML = `<span class="${fromBase<=0?'ok':'no'}">${fromBase<=0?'▼':'▲'} ${Math.abs(fromBase)}kg from baseline</span> · <span style="color:var(--mut)">${toGoal}kg to goal</span>`;
+  } else dEl.textContent="";
+  // bars: last 8 weigh-ins
+  const last = ws.slice(-8);
+  const bars = document.getElementById("wtBars"); bars.innerHTML="";
+  if(last.length){
+    const vals = last.map(w=>w.kg);
+    const min = Math.min(...vals,73)-1, max = Math.max(...vals)+0.5;
+    last.forEach(w=>{
+      const h = 12 + ((w.kg-min)/(max-min||1))*70;
+      const b = document.createElement("div"); b.className="b";
+      b.style.height = h+"px";
+      b.style.background = "linear-gradient(180deg,#2dd4bf,#0f766e)";
+      b.title = `${w.kg}kg · ${w.d}`;
+      b.innerHTML = `<i>${w.kg}</i>`;
+      bars.appendChild(b);
+    });
+  }
+}
+document.getElementById("logWt").onclick = ()=>{
+  const v = parseFloat(document.getElementById("wtInput").value);
+  if(!v) return;
+  const k = todayKey();
+  const ex = db.weights.find(w=>w.d===k);
+  if(ex) ex.kg = v; else db.weights.push({d:k,kg:v});
+  save(); document.getElementById("wtInput").value="";
+  renderWeight(); renderHist();
+};
+
+// ---- history ----
+let tab = "days";
+document.querySelectorAll("#seg button").forEach(b=>{
+  b.onclick=()=>{ tab=b.dataset.t; document.querySelectorAll("#seg button").forEach(x=>x.classList.toggle("on",x===b)); renderHist(); };
+});
+function renderHist(){
+  const h = document.getElementById("hist"); h.innerHTML="";
+  if(tab==="days"){
+    const keys = Object.keys(db.days).sort().reverse().slice(0,30);
+    if(!keys.length){ h.innerHTML='<div style="color:var(--mut);font-size:13px">No entries yet — save today to start.</div>'; return; }
+    keys.forEach(k=>{
+      const d = db.days[k];
+      const score = RULES.filter(r=>d.rules&&d.rules[r.k]).length;
+      const dots = RULES.map(r=> (d.rules&&d.rules[r.k])?'<span class="ok">●</span>':'<span class="no">○</span>').join("");
+      const el = document.createElement("div"); el.className="d";
+      el.innerHTML = `<div class="dt"><span>${fmtDate(k)}</span><span>${score}/4</span></div>
+        <div class="dots">${dots}</div>
+        ${d.meals?`<div style="margin-top:5px">${d.meals.replace(/</g,"&lt;")}</div>`:""}
+        ${d.notes?`<div style="color:var(--mut);margin-top:3px">${d.notes.replace(/</g,"&lt;")}</div>`:""}`;
+      h.appendChild(el);
+    });
+  } else {
+    const ws = db.weights.slice().sort((a,b)=>a.d<b.d?1:-1);
+    if(!ws.length){ h.innerHTML='<div style="color:var(--mut);font-size:13px">No weigh-ins yet.</div>'; return; }
+    ws.forEach((w,i)=>{
+      const prev = ws[i+1];
+      const ch = prev ? (w.kg-prev.kg).toFixed(1) : null;
+      const el = document.createElement("div"); el.className="d";
+      el.innerHTML = `<div class="dt"><span>${fmtDate(w.d)}</span>${ch!==null?`<span class="${ch<=0?'ok':'no'}">${ch<=0?'▼':'▲'} ${Math.abs(ch)}kg</span>`:""}</div>
+        <div style="font-size:16px;font-weight:600">${w.kg} kg</div>`;
+      h.appendChild(el);
+    });
+  }
+}
+
+// ---- init ----
+document.getElementById("todayLabel").textContent =
+  new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+loadDaily(); renderWeight(); renderHist();
+</script>
+</body>
+</html>
